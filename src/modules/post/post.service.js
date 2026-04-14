@@ -7,9 +7,8 @@ import { roles } from "../../DB/models/user.model.js";
 export const createPost = async (req, res, next) => {
   const { text } = req.body;
   let images = [];
-  let cloudFolder;
+  const cloudFolder = nanoid(10);
   if (req.files && req.files.length) {
-    cloudFolder = nanoid(10);
     for (const file of req.files) {
       //upload file to cloudinary
       const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
@@ -30,6 +29,7 @@ export const updatePost = async (req, res, next) => {
 
   let images = [];
   if (req.files.length) {
+    if (!post.cloudFolder) post.cloudFolder = nanoid(10);
     for (const file of req.files) {
       //upload file to cloudinary
       const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
@@ -89,11 +89,14 @@ export const getPost = async (req, res, next) => {
 };
 
 export const getAllActivePosts = async (req, res, next) => {
+  const { page } = req.query;
   let posts;
   if (req.user.role == roles.admin) {
-    posts = await Post.find({ isDeleted: false }).populate({ path: "user", select: "userName profilePicture.secure_url" });
+    posts = await Post.find({ isDeleted: false }).populate({ path: "user", select: "userName profilePicture.secure_url" }).paginate(page);
   } else if (req.user.role == roles.user) {
-    posts = await Post.find({ isDeleted: false, user: req.user._id }).populate({ path: "user", select: "userName profilePicture.secure_url" });
+    posts = await Post.find({ isDeleted: false, user: req.user._id })
+      .populate({ path: "user", select: "userName profilePicture.secure_url" })
+      .paginate(page);
   }
   //stream
   const cursor = Post.find({ isDeleted: false }).cursor();
@@ -132,3 +135,5 @@ export const likeAndUnlikePost = async (req, res, next) => {
   const populatedPost = await Post.findOne({ _id: id, isDeleted: false }).populate({ path: "likes", select: "userName profilePicture.secure_url" });
   return res.json({ success: true, message: "post like/unlike successfully", post: populatedPost });
 };
+
+

@@ -7,6 +7,7 @@ const endpoints = {
   restorePost: [roles.user, roles.admin],
   getSinglePost: [roles.user, roles.admin],
   getAllActivePosts: [roles.user, roles.admin],
+  getAllnonActivePosts: [roles.user, roles.admin],
   likePost: [roles.user],
 };
 

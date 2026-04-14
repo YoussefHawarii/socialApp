@@ -22,7 +22,7 @@ router.get("/activate_account/:token",
 asyncHandler(authServices.activate_account));
 
 // login
-router.post("/login", asyncHandler(authServices.login));
+router.post("/login", validation(authValidation.login),asyncHandler(authServices.login));
 
 //forget password
 router.post("/forget_password",

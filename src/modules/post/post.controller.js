@@ -20,7 +20,7 @@ router.post(
   "/createPost",
   isAuthenticate,
   isAuthorized(endpoints.createPost),
-  uploadCloud(fileValidation.images).array("Images"),
+  uploadCloud(fileValidation.images).array("images"),
   validation(postSchemas.createPost),
   asyncHandler(postservice.createPost),
 );
@@ -30,7 +30,7 @@ router.patch(
   "/updatePost/:id",
   isAuthenticate,
   isAuthorized(endpoints.updatePost),
-  uploadCloud(fileValidation.images).array("Images"),
+  uploadCloud(fileValidation.images).array("images"),
   validation(postSchemas.updatePost),
   asyncHandler(postservice.updatePost),
 );
@@ -40,7 +40,7 @@ router.patch(
   "/softDeletePost/:id",
   isAuthenticate,
   isAuthorized(endpoints.softDeletePost),
-  uploadCloud(fileValidation.images).array("Images"),
+  uploadCloud(fileValidation.images).array("images"),
   validation(postSchemas.softDeletePost),
   asyncHandler(postservice.softDeletePost),
 );
@@ -50,7 +50,7 @@ router.patch(
   "/restorePost/:id",
   isAuthenticate,
   isAuthorized(endpoints.restorePost),
-  uploadCloud(fileValidation.images).array("Images"),
+  uploadCloud(fileValidation.images).array("images"),
   validation(postSchemas.restorePost),
   asyncHandler(postservice.restorePost),
 );
@@ -60,7 +60,7 @@ router.get(
   "/getPost/:id",
   isAuthenticate,
   isAuthorized(endpoints.getSinglePost),
-  uploadCloud(fileValidation.images).array("Images"),
+  uploadCloud(fileValidation.images).array("images"),
   validation(postSchemas.getSinglePost),
   asyncHandler(postservice.getPost),
 );
@@ -70,7 +70,7 @@ router.get(
   "/getAllActivePosts",
   isAuthenticate,
   isAuthorized(endpoints.getAllActivePosts),
-  uploadCloud(fileValidation.images).array("Images"),
+  uploadCloud(fileValidation.images).array("images"),
   asyncHandler(postservice.getAllActivePosts),
 );
 
@@ -78,8 +78,8 @@ router.get(
 router.get(
   "/getAllnonActivePosts",
   isAuthenticate,
-  isAuthorized(endpoints.getAllActivePosts),
-  uploadCloud(fileValidation.images).array("Images"),
+  isAuthorized(endpoints.getAllnonActivePosts),
+  uploadCloud(fileValidation.images).array("images"),
   asyncHandler(postservice.getAllnonActivePosts),
 );
 
