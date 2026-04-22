@@ -1,4 +1,4 @@
-# SOcial App Backend API
+# Social App Backend API
 
 Backend API built with `Node.js`, `Express`, and `MongoDB` for user authentication, profile management, posts, comments, likes, and role-based admin controls.
 
