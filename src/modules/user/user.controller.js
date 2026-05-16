@@ -98,4 +98,19 @@ router.delete(
   asyncHandler(userServices.uploadMultiplePictures),
 ); */
 
+// send friend request
+router.post(
+  "/send-friend-request/:friendId",
+  isAuthenticate,
+  validation(userValidation.friendIdSchema),
+  asyncHandler(userServices.sendFriendRequest),
+);
+
+// accept friend request
+router.post(
+  "/friend-request/:friendId/accept",
+  isAuthenticate,
+  validation(userValidation.acceptfriendIdSchema),
+  asyncHandler(userServices.acceptFriendRequest),
+);
 export default router;

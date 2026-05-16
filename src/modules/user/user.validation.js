@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { generalFields } from "../../middleware/validation.middleware.js";
+import { generalFields, isValidObjectId } from "../../middleware/validation.middleware.js";
 
 export const updateProfileSchema = Joi.object({
   userName: generalFields.userName,
@@ -14,4 +14,12 @@ export const changePasswordSchema = Joi.object({
 export const updateEmailSchema = Joi.object({
   email: generalFields.email.required(),
   password: generalFields.password.required(),
+}).required();
+
+export const friendIdSchema = Joi.object({
+  friendId: Joi.custom(isValidObjectId).required(),
+}).required();
+
+export const acceptfriendIdSchema = Joi.object({
+  friendId: Joi.custom(isValidObjectId).required(),
 }).required();
