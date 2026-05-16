@@ -4,11 +4,14 @@ import userRouters from "./modules/user/user.controller.js";
 import postRouters from "./modules/post/post.controller.js";
 import commentRouters from "./modules/comment/comment.controller.js";
 import adminRouters from "./modules/admin/admin.controller.js";
+import chatRouters from "./modules/chat/chat.controller.js";
 import globalError from "./utils/errors/globalErrorHandler.js";
 import notFound from "./utils/errors/notFound.js";
 import cors from "cors";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
+import { createHandler } from "graphql-http/lib/use/express";
+import { schema } from "./modules/app.graph.js";
 
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
@@ -20,9 +23,9 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
 
-  keyGenerator: (req, res) => {
-    return req.ip;
-  },
+  // keyGenerator: (req, res) => {
+  //   return req.ip;
+  // },
 });
 const bootstrap = async (app, express) => {
   //connection
@@ -36,11 +39,29 @@ const bootstrap = async (app, express) => {
   //!rate limiting to limit the number of requests from a single IP address in a given time frame, which helps to prevent abuse and protect against DDoS attacks.
   app.use(limiter);
   app.use(helmet()); //* doesn't have a big effect on my project, but mainly we use it during building a MVC project
+  app.use(
+    "/graphql",
+    createHandler({
+      schema,
+      context: (req) => {
+        const { authorization } = req.headers;
+        return { authorization };
+      },
+      formatError: (err) => {
+        return {
+          success: false,
+          message: err.originalError?.message,
+          statusCode: err.originalError?.cause || 500,
+        };
+      },
+    }),
+  );
   app.use("/auth", authRouters);
   app.use("/user", userRouters);
   app.use("/post", postRouters);
   app.use("/comment", commentRouters);
   app.use("/admin", adminRouters);
+  app.use("/chat", chatRouters);
   // API not found
   app.all("*url", notFound);
   //handling global error
