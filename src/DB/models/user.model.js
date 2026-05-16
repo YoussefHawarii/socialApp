@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 import { hash } from "../../utils/hashing/hash.js";
 
 export const roles = {
@@ -36,7 +36,7 @@ const userSchema = new Schema(
     },
     userName: {
       type: String,
-      minLength: 5,
+      minLength: 3,
       maxLength: 15,
       required: true,
       unique: [true, "userName Already exists"],
@@ -58,6 +58,8 @@ const userSchema = new Schema(
       secure_url: { type: String, default: cloudinarySecureUrl },
     },
     pictures: [{ type: String, default: null }],
+    friends: [{ type: Types.ObjectId, ref: "User" }],
+    friendRequests: [{ type: Types.ObjectId, ref: "User" }],
   },
   { timestamps: true },
 );

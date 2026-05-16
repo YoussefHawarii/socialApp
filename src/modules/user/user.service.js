@@ -6,12 +6,13 @@ import { verifyNewEmail } from "../../utils/emails/generateHTML.js";
 import fs from "fs";
 import path from "path";
 import cloudinary from "../../utils/fileUploading/cloudinary.config.js";
+import { areFriends, requestExists } from "./helpers/checkFriends.js";
 
 export const profile = async (req, res, next) => {
   //req.user = {email,username,phoneNumber,gender,role}
-  const { user } = req;
-
-  return res.status(201).json({ success: true, results: { ...user } });
+  // const { user } = req;
+  const user = await User.findById(req.user._id).populate("friends");
+  return res.status(201).json({ success: true, results: user });
 };
 
 export const updateProfile = async (req, res, next) => {
@@ -139,4 +140,41 @@ export const uploadMultiplePictures = async (req, res, next) => {
   await user.save();
 
   return res.status(201).json({ success: true, message: "pictures uploaded successfully" });
+};
+
+export const sendFriendRequest = async (req, res, next) => {
+  const { friendId } = req.params; // receiver id
+  const user = req.user; // sender
+
+  const friend = await User.findOne({ _id: friendId, freezed: false, isDeleted: false });
+  if (!friend) return next(new Error("friend not found", { cause: 404 }));
+
+  // check if they are already friends or friend request already sent
+  if (areFriends(user, friend) || requestExists(user, friend)) return next(new Error("cannot send request", { cause: 400 }));
+
+  //add friend request
+  friend.friendRequests.push(user._id);
+  await friend.save();
+  return res.status(201).json({ success: true, message: "friend request sent successfully" });
+};
+
+export const acceptFriendRequest = async (req, res, next) => {
+  const { friendId } = req.params; // sender id
+  const user = req.user; // receiver
+
+  const friend = await User.findOne({ _id: friendId, freezed: false, isDeleted: false });
+  if (!friend) return next(new Error("friend not found", { cause: 404 }));
+
+  // check if they are already friends or friend request not sent
+  if (areFriends(user, friend) || !requestExists(user, friend)) return next(new Error("cannot accept request", { cause: 400 }));
+
+  // add each other to friends array
+  user.friends.push(friend._id);
+  friend.friends.push(user._id);
+
+  // remove friend request
+  user.friendRequests = user.friendRequests.filter((id) => id.toString() !== friend._id.toString());
+  await user.save();
+  await friend.save();
+  return res.status(201).json({ success: true, message: "friend request accepted successfully" });
 };
