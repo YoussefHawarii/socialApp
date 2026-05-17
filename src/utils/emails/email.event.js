@@ -1,4 +1,4 @@
-import { EventEmitter } from "events";
+import  EventEmitter  from "events";
 import jwt from "jsonwebtoken";
 import sendEmails from "./sendEmails.js";
 import { signUp, verifyOTP } from "./generateHTML.js";

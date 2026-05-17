@@ -29,7 +29,7 @@ export const generalFields = {
   otp: joi.string().length(5),
   password: joi.string(),
   confirmPassword: joi.string().valid(joi.ref("password")),
-  userName: joi.string().min(5).max(15),
+  userName: joi.string().min(3).max(15),
 };
 
 export const fileObj = {
