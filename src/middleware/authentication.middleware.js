@@ -20,7 +20,7 @@ const isAuthenticate = asyncHandler(async (req, res, next) => {
   const decoded = verifyToken({ token });
   const { id } = decoded;
   //fetch user data
-  const user = await User.findById(id).select("-password").lean();
+  const user = await User.findById(id).select("-password");
   if (!user) return next(new Error("user not found", { cause: 403 }));
 
   if (user.changedAt?.getTime() >= decoded.iat * 1000) return next(new Error("please login again", { cause: 403 }));
