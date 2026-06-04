@@ -1,89 +1,263 @@
 # Social App Backend API
 
-Backend API built with `Node.js`, `Express`, and `MongoDB` for user authentication, profile management, posts, comments, likes, and role-based admin controls.
+Backend API built with `Node.js`, `Express`, and `MongoDB` for user authentication, profile management, posts, comments, likes, role-based admin controls, friend requests, GraphQL post reads, and chat messaging.
+
+## Description
 
 This project includes:
-- JWT authentication (`access` + `refresh` token flow)
-- OTP email verification for registration and password reset
-- User profile management with profile picture upload to Cloudinary
-- Post CRUD-style operations (create, update, soft delete, restore, list, like/unlike)
-- Comment system (create, update, reply, soft delete, hard delete, like/unlike)
-- Role-based authorization (`user`, `admin`, `superAdmin`)
-- Basic API security (`helmet`, `cors`, `express-rate-limit`)
 
----
+- JWT authentication with access and refresh token flow.
+- OTP email verification for registration and password reset.
+- Google login support.
+- User profile management with Cloudinary profile picture upload.
+- Friend request and friend acceptance flow.
+- Post operations: create, update, soft delete, restore, list, and like/unlike.
+- Comment operations: create, update, reply, soft delete, hard delete, and like/unlike.
+- GraphQL post query schema mounted at `/graphql`.
+- Chat storage with MongoDB and real-time message sending through Socket.IO.
+- Role-based authorization with `user`, `admin`, and `superAdmin` roles.
+- Basic API security with `helmet`, `cors`, and `express-rate-limit`.
 
-## 1. Tech Stack
+## Table of Contents
 
-- Runtime: `Node.js` (engine pinned to `20.15.1`)
-- Framework: `Express 5`
-- Database: `MongoDB` + `Mongoose`
-- Auth: `jsonwebtoken`, `bcrypt`
-- Validation: `Joi`
-- File Upload: `multer`
-- Cloud Media: `cloudinary`
-- Email: `nodemailer` + event-based emitter
-- Deployment config: `vercel.json`
+- [Installation](#installation)
+- [Usage](#usage)
+- [New Features](#new-features)
+- [New Files](#new-files)
+- [Configuration](#configuration)
+- [Dependencies](#dependencies)
+- [License](#license)
+- [Contribution Guidelines](#contribution-guidelines)
 
----
+## Installation
 
-## 2. Project Structure
+Install dependencies:
 
-```txt
-.
-|- index.js
-|- vercel.json
-|- src/
-|  |- app.controller.js
-|  |- DB/
-|  |  |- connection.js
-|  |  |- models/
-|  |     |- user.model.js
-|  |     |- post.model.js
-|  |     |- comment.model.js
-|  |     |- otp.model.js
-|  |- middleware/
-|  |  |- authentication.middleware.js
-|  |  |- authorization.middleware.js
-|  |  |- validation.middleware.js
-|  |- modules/
-|  |  |- auth/
-|  |  |- user/
-|  |  |- post/
-|  |  |- comment/
-|  |  |- admin/
-|  |- utils/
-|     |- emails/
-|     |- errors/
-|     |- fileUploading/
-|     |- hashing/
-|     |- token/
-|     |- encryption/
-|- uploads/
+```bash
+npm install
 ```
 
----
+Create a `.env` file in the project root before running the server. See [Configuration](#configuration) for the required variables.
 
-## 3. How the App Boots
+## Usage
 
-1. `index.js` loads environment variables and starts Express on port `3000`.
-2. `src/app.controller.js`:
-- Connects to MongoDB.
-- Enables `cors`.
-- Parses JSON.
-- Adds global rate limit (`3` requests per `5` minutes per IP).
-- Adds `helmet`.
-- Mounts routes:
-  - `/auth`
-  - `/user`
-  - `/post`
-  - `/comment`
-  - `/admin`
-- Handles unknown routes and global errors.
+Run the application in watch mode:
 
----
+```bash
+npm run dev
+```
 
-## 4. Environment Variables
+Run the application with `nodemon` and `.env` loading:
+
+```bash
+npm start
+```
+
+The server listens on:
+
+```txt
+http://localhost:3000
+```
+
+All authenticated REST routes expect this header format:
+
+```http
+Authorization: Bearer <token>
+```
+
+### REST API
+
+#### Auth Routes
+
+Base path: `/auth`
+
+- `POST /auth/verify` - Send OTP for registration email verification.
+- `POST /auth/register` - Register with `email`, `otp`, `password`, `confirmPassword`, and `userName`.
+- `GET /auth/activate_account/:token` - Activate an account using a token.
+- `POST /auth/login` - Login and return access and refresh tokens.
+- `POST /auth/forget_password` - Send OTP for password reset.
+- `POST /auth/reset_password` - Reset password using OTP.
+- `GET /auth/refresh_token` - Refresh access token.
+- `POST /auth/google_login` - Login or register using a Google `idToken`.
+
+#### User Routes
+
+Base path: `/user`
+
+- `GET /user/profile` - Get the authenticated user's profile with populated friends.
+- `PATCH /user/profile` - Update profile fields validated by `user.validation.js`.
+- `PATCH /user/change-password` - Change password using `oldPassword`, `password`, and `confirmPassword`.
+- `DELETE /user/deactivate` - Soft-deactivate the authenticated account.
+- `PATCH /user/update-email` - Store a temporary email and send verification mail.
+- `GET /user/verify-email/:token` - Confirm and apply a temporary email change.
+- `POST /user/profilePicture` - Upload a profile picture to Cloudinary.
+- `DELETE /user/profilePicture` - Delete the Cloudinary profile picture and restore the default image.
+- `POST /user/send-friend-request/:friendId` - Send a friend request to another active, non-deleted user.
+- `POST /user/friend-request/:friendId/accept` - Accept a pending friend request.
+
+#### Post Routes
+
+Base path: `/post`
+
+- `POST /post/createPost` - Create a post with text and/or images.
+- `PATCH /post/updatePost/:id` - Update post text and optionally replace images.
+- `PATCH /post/softDeletePost/:id` - Soft-delete a post.
+- `PATCH /post/restorePost/:id` - Restore a soft-deleted post.
+- `GET /post/getPost/:id` - Get one post with populated comments and replies.
+- `GET /post/getAllActivePosts` - List active posts.
+- `GET /post/getAllnonActivePosts` - List soft-deleted posts.
+- `PATCH /post/:id/like-unlike` - Toggle like/unlike on a post.
+
+#### Comment Routes
+
+Base path: `/post/:postId/comment`
+
+- `POST /post/:postId/comment/` - Create a top-level comment.
+- `PATCH /post/:postId/comment/:id` - Update a comment.
+- `PATCH /post/:postId/comment/:id/delete` - Soft-delete a comment.
+- `GET /post/:postId/comment/` - Get top-level comments and replies.
+- `PATCH /post/:postId/comment/:id/like-unlike` - Toggle like/unlike on a comment.
+- `POST /post/:postId/comment/:id` - Reply to a comment.
+- `DELETE /post/:postId/comment/:id` - Hard-delete a comment.
+
+#### Admin Routes
+
+Base path: `/admin`
+
+- `GET /admin/` - Fetch users and posts.
+- `PATCH /admin/role` - Change a target user's role according to role hierarchy checks.
+
+#### Chat Routes
+
+Base path: `/chat`
+
+- `GET /chat/:friendId` - Get the stored chat between the authenticated user and a friend.
+
+### GraphQL
+
+GraphQL is mounted at:
+
+```txt
+http://localhost:3000/graphql
+```
+
+The GraphQL handler reads the `authorization` header and passes it into the GraphQL context.
+
+Declared post queries include:
+
+```graphql
+query GetOnePost($id: ID!) {
+  onePost(id: $id) {
+    success
+    statusCode
+    results {
+      _id
+      text
+      images {
+        secure_url
+        public_id
+      }
+      user {
+        _id
+        email
+        userName
+      }
+      likes
+      isDeleted
+      deletedBy
+      createdAt
+      updatedAt
+    }
+  }
+}
+```
+
+```graphql
+query GetAllPosts {
+  allPosts {
+    success
+    statusCode
+    results {
+      _id
+      text
+      user {
+        _id
+        userName
+      }
+    }
+  }
+}
+```
+
+### Socket.IO Chat
+
+Socket.IO starts from `index.js` after the Express server is created.
+
+Clients must authenticate through the Socket.IO handshake auth object:
+
+```javascript
+const socket = io("http://localhost:3000", {
+  auth: {
+    authorization: "Bearer <token>",
+  },
+});
+```
+
+Send a message:
+
+```javascript
+socket.emit("sendMessage", {
+  to: "<friendUserId>",
+  message: "Hello",
+});
+```
+
+Listen for incoming message notifications:
+
+```javascript
+socket.on("successMessage", (payload) => {
+  console.log(payload);
+});
+```
+
+## New Features
+
+- Friend requests: Users can send a friend request with `POST /user/send-friend-request/:friendId`. The target user receives the sender ID in `friendRequests`.
+- Friend acceptance: Users can accept a pending request with `POST /user/friend-request/:friendId/accept`. Both users are added to each other's `friends` arrays, and the pending request is removed.
+- Friend-aware profile response: `GET /user/profile` populates the authenticated user's `friends` field.
+- Friend and request guard helpers: `areFriends()` and `requestExists()` prevent duplicate friendships and duplicate pending requests.
+- GraphQL endpoint: `/graphql` is mounted with `graphql-http` and exposes post query definitions from `src/modules/post/graphql/post.query.js`.
+- GraphQL middleware composition: GraphQL authentication, validation, and middleware composition helpers support resolver-level access checks and argument validation.
+- GraphQL post response types: Post, user, and image response types define the GraphQL shape for post query results.
+- Real-time chat with Socket.IO: The server authenticates Socket.IO clients with the same Bearer token format used by REST routes and handles `sendMessage` events.
+- Chat persistence: Chat messages are stored in MongoDB using the `chat` model, with exactly two members per chat document.
+- Chat history endpoint: `GET /chat/:friendId` returns the stored chat between the authenticated user and the selected friend.
+- ObjectId validation helper: `isValidObjectId` in `src/middleware/validation.middleware.js` validates route params such as `friendId`.
+
+## New Files
+
+- [`src/DB/models/chat.model.js`](src/DB/models/chat.model.js) - Mongoose chat model with two chat members and timestamped message subdocuments.
+- [`src/graphql/allFunctions.js`](src/graphql/allFunctions.js) - Utility for composing GraphQL middleware functions around a resolver.
+- [`src/graphql/authentication.js`](src/graphql/authentication.js) - GraphQL authentication middleware using Bearer JWT tokens and optional role checks.
+- [`src/graphql/validation.js`](src/graphql/validation.js) - GraphQL argument validation wrapper using Joi schemas.
+- [`src/modules/app.graph.js`](src/modules/app.graph.js) - Main GraphQL schema definition and root query registration.
+- [`src/modules/chat/chat.controller.js`](src/modules/chat/chat.controller.js) - Express chat router for chat history and declared message route wiring.
+- [`src/modules/chat/chat.service.js`](src/modules/chat/chat.service.js) - Chat REST service logic for loading a chat between two users.
+- [`src/modules/chat/chat.validation.js`](src/modules/chat/chat.validation.js) - Joi validation schemas for chat route parameters and message content.
+- [`src/modules/post/graphql/post.graph.service.js`](src/modules/post/graphql/post.graph.service.js) - GraphQL resolver logic for post queries.
+- [`src/modules/post/graphql/post.graphql.validation.js`](src/modules/post/graphql/post.graphql.validation.js) - Joi validation schema for GraphQL post query arguments.
+- [`src/modules/post/graphql/post.mutation.js`](src/modules/post/graphql/post.mutation.js) - Placeholder file for future post GraphQL mutations.
+- [`src/modules/post/graphql/post.query.js`](src/modules/post/graphql/post.query.js) - GraphQL post query definitions for `onePost` and `allPosts`.
+- [`src/modules/post/graphql/types/post.types.request.js`](src/modules/post/graphql/types/post.types.request.js) - GraphQL argument type definitions for post queries.
+- [`src/modules/post/graphql/types/post.types.response.js`](src/modules/post/graphql/types/post.types.response.js) - GraphQL response type definitions for post data.
+- [`src/modules/user/graphql/user.types.response.js`](src/modules/user/graphql/user.types.response.js) - GraphQL response type definition for user data embedded in post responses.
+- [`src/modules/user/helpers/checkFriends.js`](src/modules/user/helpers/checkFriends.js) - Helper functions for checking existing friendships and pending friend requests.
+- [`src/socketio/chatting/chat.services.js`](src/socketio/chatting/chat.services.js) - Socket.IO chat message handler that creates chat documents and stores messages.
+- [`src/socketio/index.js`](src/socketio/index.js) - Socket.IO server bootstrap and event registration.
+- [`src/socketio/middleware/authentication.socketio.js`](src/socketio/middleware/authentication.socketio.js) - Socket.IO authentication middleware using Bearer JWT tokens.
+- [`src/utils/graphql/image.type.js`](src/utils/graphql/image.type.js) - Reusable GraphQL image type with `secure_url` and `public_id`.
+
+## Configuration
 
 Create a `.env` file in the project root:
 
@@ -104,233 +278,78 @@ CLOUD_FOLDER_NAME=
 NODE_ENV=development
 ```
 
-Meaning:
-- `CONNECTION_URI`: MongoDB connection string
-- `JWT_SECRET_KEY`: JWT signing secret
-- `ACCESS_TOKEN_EXPIRES_IN`: access token expiry (example: `1h`)
-- `REFRESH_TOKEN_EXPIRES_IN`: refresh token expiry (example: `7d`)
-- `ROUNDS`: bcrypt salt rounds (example: `8` or `10`)
-- `SECRET_KEY`: AES key used by encryption util
-- `EMAIL`, `PASS`: Gmail SMTP credentials used by Nodemailer
-- `GOOGLE_CLIENT_ID`: Google OAuth client id for Google login
-- `CLOUD_*` + `API_*`: Cloudinary config
-- `NODE_ENV`: affects error stack output
+Variable meanings:
 
----
+- `CONNECTION_URI` - MongoDB connection string.
+- `JWT_SECRET_KEY` - JWT signing secret.
+- `ACCESS_TOKEN_EXPIRES_IN` - Access token expiry.
+- `REFRESH_TOKEN_EXPIRES_IN` - Refresh token expiry.
+- `ROUNDS` - bcrypt salt rounds.
+- `SECRET_KEY` - AES key used by the encryption utility.
+- `EMAIL` - Email address used by Nodemailer.
+- `PASS` - Email password or app password used by Nodemailer.
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID for Google login.
+- `CLOUD_NAME` - Cloudinary cloud name.
+- `API_KEY` - Cloudinary API key.
+- `API_SECRET` - Cloudinary API secret.
+- `CLOUD_FOLDER_NAME` - Cloudinary folder name used by upload utilities.
+- `NODE_ENV` - Runtime environment. Non-production mode includes stack traces in error responses.
 
-## 5. Run Locally
+## Dependencies
 
-```bash
-npm install
-npm run dev
-```
+Runtime and framework:
 
-Scripts:
-- `npm run dev`: run with `nodemon` + `.env`
-- `npm start`: run with `node` + `.env`
+- `node` engine: `20.15.1`
+- `express`
+- `mongoose`
+- `dotenv`
 
-Server default URL:
-- `http://localhost:3000`
+Authentication and security:
 
----
+- `jsonwebtoken`
+- `bcrypt`
+- `bcryptjs`
+- `google-auth-library`
+- `helmet`
+- `cors`
+- `express-rate-limit`
 
-## 6. Authentication & Authorization
+Validation and async handling:
 
-### Authentication middleware
-- Reads `Authorization` header in format: `Bearer <token>`
-- Verifies JWT and loads user from DB
-- Rejects invalid/expired/changed-password sessions
+- `joi`
+- `express-async-handler`
 
-### Authorization middleware
-- Per-route role checks using allowed endpoint role lists
-- Roles:
-  - `superAdmin`
-  - `admin`
-  - `user`
+Uploads and media:
 
----
+- `multer`
+- `cloudinary`
+- `nanoid`
 
-## 7. API Modules and Endpoints
+Email and tokens:
 
-## Auth (`/auth`)
+- `nodemailer`
+- `randomstring`
+- `crypto-js`
 
-- `POST /auth/verify`
-  - Send OTP for registration email.
-- `POST /auth/register`
-  - Register using `email + otp + password + confirmPassword + userName`.
-- `GET /auth/activate_account/:token`
-  - Account activation route (token based).
-- `POST /auth/login`
-  - Returns `access_token` and `refresh_token`.
-- `POST /auth/forget_password`
-  - Sends OTP for reset flow.
-- `POST /auth/reset_password`
-  - Resets password using OTP.
-- `GET /auth/refresh_token`
-  - Refreshes access token (expects `refresh_token` in body in current implementation).
-- `POST /auth/google_login`
-  - Login/registration via Google `idToken`.
+GraphQL and real-time messaging:
 
-## User (`/user`) - requires auth
+- `graphql`
+- `graphql-http`
+- `socket.io`
 
-- `GET /user/profile`
-  - Current authenticated profile data.
-- `PATCH /user/profile`
-  - Update profile fields (validation currently for `userName`).
-- `PATCH /user/change-password`
-  - Change password using `oldPassword`.
-- `DELETE /user/deactivate`
-  - Soft-deactivate account (`isDeleted = true`).
-- `PATCH /user/update-email`
-  - Save temporary email and send verification email.
-- `GET /user/verify-email/:token`
-  - Finalize new email change.
-- `POST /user/profilePicture`
-  - Upload profile picture to Cloudinary.
-- `DELETE /user/profilePicture`
-  - Delete Cloudinary profile picture and restore default.
+Deployment:
 
-## Post (`/post`) - requires auth
+- `vercel.json` configures `index.js` for deployment with `@vercel/node`.
 
-- `POST /post/createPost`
-  - Create post with text and/or images.
-- `PATCH /post/updatePost/:id`
-  - Update text and optional image replacement.
-- `PATCH /post/softDeletePost/:id`
-  - Soft delete post.
-- `PATCH /post/restorePost/:id`
-  - Restore soft-deleted post by same deleter.
-- `GET /post/getPost/:id`
-  - Get one post with populated comments/replies.
-- `GET /post/getAllActivePosts`
-  - List active posts.
-  - Supports pagination via query `page` (custom Mongoose query helper, page size `4`).
-- `GET /post/getAllnonActivePosts`
-  - List soft-deleted posts.
-- `PATCH /post/:id/like-unlike`
-  - Toggle like on a post.
+## License
 
-## Comment (`/post/:postId/comment`) - requires auth
+This project is licensed under the ISC License.
 
-- `POST /post/:postId/comment/`
-  - Create comment.
-- `PATCH /post/:postId/comment/:id`
-  - Update comment.
-- `PATCH /post/:postId/comment/:id/delete`
-  - Soft delete comment.
-- `GET /post/:postId/comment/`
-  - Get all top-level comments and replies.
-- `PATCH /post/:postId/comment/:id/like-unlike`
-  - Toggle like on comment.
-- `POST /post/:postId/comment/:id`
-  - Reply to a comment.
-- `DELETE /post/:postId/comment/:id`
-  - Hard delete comment.
+## Contribution Guidelines
 
-## Admin (`/admin`) - requires `admin` or `superAdmin`
-
-- `GET /admin/`
-  - Fetch all users and posts.
-- `PATCH /admin/role`
-  - Change target user role.
-  - Includes `canChangeRole` hierarchy check:
-    - `superAdmin` can act on lower roles.
-    - `admin` can act on lower roles.
-
----
-
-## 8. Data Models
-
-## User
-
-- Fields:
-  - `email`, `password`, `userName`, `role`
-  - `isActivated`, `isDeleted`, `tempEmail`
-  - `provider` (`system` / `google`)
-  - `profilePicture` (`secure_url`, `public_id`)
-  - `pictures[]`
-- Hooks:
-  - `pre("save")` hashes password if modified.
-
-## OTP
-
-- Fields:
-  - `email`, `otp`
-- TTL index:
-  - Expires after `300` seconds (5 minutes).
-
-## Post
-
-- Fields:
-  - `text`, `images[]`, `user`, `likes[]`
-  - `isDeleted`, `deletedBy`, `cloudFolder`
-- Virtual:
-  - `comments` relation.
-- Query helper:
-  - `.paginate(page)` with limit `4`.
-
-## Comment
-
-- Fields:
-  - `post`, `user`, `text`, `image`
-  - `likes[]`, `isDeleted`, `deletedBy`
-  - `parentComment`
-- Virtual:
-  - `replies`.
-- Hook:
-  - recursive delete of child replies on hard delete.
-
----
-
-## 9. Upload and Media Flow
-
-- `multer` uses memory/temp flow for Cloudinary upload (`uploadCloud`).
-- Local-disk upload util also exists (`multerUpload.js`) and creates user-specific folders.
-- Current active routes mainly use Cloudinary:
-  - User profile pictures
-  - Post images
-  - Comment/reply images
-
----
-
-## 10. Email Flow
-
-- Uses `EventEmitter` in `email.event.js`.
-- Active email event:
-  - `sendOTPEmail` (for verify/reset OTP).
-- Email templates are generated from `generateHTML.js`.
-- `update-email` sends verification URL using a dedicated template.
-
----
-
-## 11. Error Handling
-
-- `asyncHandler` wraps async route handlers.
-- Unknown APIs go to `notFound`.
-- `globalErrorHandler` sends:
-  - status from `error.cause` or `500`
-  - message
-  - stack trace in non-production mode
-
----
-
-## 12. Security
-
-- `helmet` for common HTTP security headers.
-- `cors` enabled.
-- `express-rate-limit` globally enabled:
-  - window: 5 minutes
-  - max: 3 requests/IP
-
----
-
-## 13. Deployment
-
-`vercel.json` is configured to deploy `index.js` with `@vercel/node` and route all paths to that entry point.
-
----
-
-## 14. Notes
-
-- Test script is currently placeholder (`"no test specified"`).
-- Both local filesystem and Cloudinary upload strategies are present; Cloudinary is the active route path in current controllers.
+1. Create a focused branch for each change.
+2. Keep changes scoped to the feature or fix being implemented.
+3. Add or update validation schemas when adding request inputs.
+4. Keep route documentation in this README aligned with controller and service changes.
+5. Run the app locally before opening a pull request.
+6. Do not commit `.env`, credentials, generated local uploads, or other sensitive files.
