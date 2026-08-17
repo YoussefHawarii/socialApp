@@ -2,3 +2,12 @@
 node_modules
 .vscode/
 client_secret_*.json
+
+# Claude Code / agent workspace files
+.claude/
+
+# Internal planning docs — not part of the shipped project
+frontend/plan.md
+frontend/Phase 0 → Phase 3.md
+frontend/Phase 4 → Phase 6.md
+frontend/Phase 7 → Phase 10.md

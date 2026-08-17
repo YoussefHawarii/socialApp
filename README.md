@@ -1,6 +1,25 @@
-# Social App Backend API
+# Social App
 
-Backend API built with `Node.js`, `Express`, and `MongoDB` for user authentication, profile management, posts, comments, likes, role-based admin controls, friend requests, GraphQL post reads, and chat messaging.
+A full-stack social platform: a REST + GraphQL + Socket.IO API (this repository's root) paired
+with a React SPA client in [`frontend/app`](frontend/app). Users can register/log in, manage a
+profile with a Cloudinary-hosted avatar, create posts with images, comment/reply/like, add
+friends, chat in real time, and (for admins) manage user roles.
+
+This document covers the **backend API**. For the frontend — setup, environment variables, and
+the full list of implemented pages/features — see [`frontend/app/README.md`](frontend/app/README.md).
+
+## Project structure
+
+```
+.
+├── src/                  # Express app: routes, services, models, middleware, GraphQL, sockets
+├── index.js              # Entry point — boots Express, Socket.IO, and the DB connection
+└── frontend/
+    └── app/              # React + Vite + TypeScript client (separate README, separate install)
+```
+
+The backend and frontend are developed and run independently — install and start each one
+separately (see each project's own setup instructions).
 
 ## Description
 

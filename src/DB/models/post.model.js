@@ -38,11 +38,12 @@ postSchema.virtual("comments", {
 postSchema.query.paginate = async function (page) {
   //pagination logic
   page = page ? page : 1;
-  const limit = 4;
+  const limit = 10;
   const skip = limit * (page - 1);
 
+  const filter = this.getFilter();
   const data = await this.skip(skip).limit(limit);
-  const posts = await this.model.countDocuments();
+  const posts = await this.model.countDocuments(filter);
   return {
     data,
     currentPage: Number(page),

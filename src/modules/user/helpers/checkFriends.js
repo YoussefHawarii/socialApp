@@ -1,8 +1,8 @@
-// const converToString = (_id) => _id.toString(); ==> option 1
+// const convertToString = (_id) => _id.toString(); ==> option 1
 
 // String ==> function option 2
 
-//chek friends
+//check friends
 export const areFriends = (user, friend) => {
   if (friend.friends.map(String).includes(user.id) || user.friends.map(String).includes(friend.id)) return true;
   return false;

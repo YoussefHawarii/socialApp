@@ -15,8 +15,8 @@ import { schema } from "./modules/app.graph.js";
 
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  limit: 3,
-  message: "Too many requests from this IP, please try again after 5 minutes",
+  limit: 100, // Limit each IP to 100 requests per `window` (here, per 5 minutes)
+  message: `Too many requests from this IP, please try again after ${Math.ceil(5 / 60)} minutes`,
   // !Function to run after limit is reached (overrides message and statusCode settings, if set).
   handler: (req, res, next, options) => {
     return next(new Error(options.message, { cause: options.statusCode }));
