@@ -1,11 +1,11 @@
 import User from "./../../DB/models/user.model.js";
 import jwt from "jsonwebtoken";
-import { emailEmitter } from "../../utils/emails/email.event.js";
 import { compare } from "../../utils/hashing/hash.js";
 import { generateToken, verifyToken } from "../../utils/token/token.js";
 import Randomstring from "randomstring";
 import OTP from "../../DB/models/otp.model.js";
-import { subjects } from "../../utils/emails/sendEmails.js";
+import sendEmails, { subjects } from "../../utils/emails/sendEmails.js";
+import { verifyOTP } from "../../utils/emails/generateHTML.js";
 import { OAuth2Client } from "google-auth-library";
 
 export const register = async (req, res, next) => {
@@ -87,10 +87,10 @@ export const sendOTP = async (req, res, next) => {
   //save OTP in DB
   await OTP.create({ email, otp });
   //send OTP in email
-  emailEmitter.emit("sendOTPEmail", {
-    email,
-    otp,
+  await sendEmails({
+    to: email,
     subject: subjects.otp,
+    html: verifyOTP(email, otp),
   });
   return res.status(200).json({ success: true, message: "OTP sent to your email" });
 };
@@ -107,10 +107,10 @@ export const forget_password = async (req, res, next) => {
   //save OTP in DB
   await OTP.create({ email, otp });
   //send OTP in email
-  emailEmitter.emit("sendOTPEmail", {
-    email,
-    otp,
+  await sendEmails({
+    to: email,
     subject: subjects.resetPass,
+    html: verifyOTP(email, otp),
   });
   return res.status(200).json({ success: true, message: "OTP sent to your email" });
 };
