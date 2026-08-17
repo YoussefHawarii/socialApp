@@ -2,7 +2,7 @@
 node_modules
 .vscode/
 client_secret_*.json
-
+mongoDB *
 # Claude Code / agent workspace files
 .claude/
 
