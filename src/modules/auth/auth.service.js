@@ -1,4 +1,4 @@
-import User from "./../../DB/models/user.model.js";
+import User, { providers } from "./../../DB/models/user.model.js";
 import jwt from "jsonwebtoken";
 import { compare } from "../../utils/hashing/hash.js";
 import { generateToken, verifyToken } from "../../utils/token/token.js";

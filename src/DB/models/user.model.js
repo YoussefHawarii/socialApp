@@ -37,7 +37,7 @@ const userSchema = new Schema(
     userName: {
       type: String,
       minLength: 3,
-      maxLength: 15,
+      maxLength: 25,
       required: true,
       unique: [true, "userName Already exists"],
     },

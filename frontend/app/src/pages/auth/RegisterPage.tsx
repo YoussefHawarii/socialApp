@@ -14,6 +14,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Button } from '@/components/ui/Button';
 import { ApiErrorAlert } from '@/components/shared/ApiErrorAlert';
 import { toast } from '@/store/toast.store';
+import { GoogleLoginButton } from '@/features/auth/GoogleLoginButton';
 
 function OtpStep({ onSent }: { onSent: (email: string) => void }) {
   const sendOtp = useSendOtp();
@@ -53,6 +54,8 @@ function OtpStep({ onSent }: { onSent: (email: string) => void }) {
           Log in
         </Link>
       </p>
+
+      <GoogleLoginButton />
     </div>
   );
 }
