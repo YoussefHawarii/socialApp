@@ -166,13 +166,16 @@ export const google_login = async (req, res, next) => {
   const userData = await verify();
   const { email_verified, email, name, picture } = userData;
   if (!email_verified) return next(new Error("invalid Email", { cause: 400 }));
-  //creation
-  const user = await User.create({
-    email,
-    userName: name,
-    isActivated: true,
-    provider: providers.google,
-  });
+  //find or create
+  let user = await User.findOne({ email });
+  if (!user) {
+    user = await User.create({
+      email,
+      userName: name,
+      isActivated: true,
+      provider: providers.google,
+    });
+  }
   //generate token
   const access_token = generateToken({
     payload: { id: user._id, email: user.email },
