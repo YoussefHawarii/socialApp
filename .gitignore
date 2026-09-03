@@ -5,7 +5,6 @@ mongoDB *
 .specify
 # Claude Code / agent workspace files
 .claude/
-CLAUDE.md
 
 # Internal planning docs — not part of the shipped project
 frontend/plan.md
