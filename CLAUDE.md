@@ -136,3 +136,13 @@ Two independent Vercel projects, both linked to this GitHub repo but at differen
 Vercel env var changes do **not** take effect on already-running instances/deployments — a new
 deployment is required to pick them up (push a commit, even an empty one, to trigger it via the
 GitHub integration).
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for `YoussefHawarii/socialApp`, using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
