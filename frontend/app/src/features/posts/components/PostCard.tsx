@@ -4,6 +4,7 @@ import { useCurrentUser } from '@/features/user/useCurrentUser';
 import { useSoftDeletePost, useRestorePost } from '@/features/posts/usePostMutations';
 import { LikeButton } from './LikeButton';
 import { Button } from '@/components/ui/Button';
+import { withCloudinaryLimit } from '@/lib/cloudinaryImage';
 
 interface PostCardProps {
   post: Post;
@@ -36,9 +37,9 @@ export function PostCard({ post, showRestore = false }: PostCardProps) {
       {post.images.length === 1 && (
         <div className="mt-3">
           <img
-            src={post.images[0].secure_url}
+            src={withCloudinaryLimit(post.images[0].secure_url, 1200)}
             alt=""
-            className="max-h-[32rem] w-full rounded-lg bg-gray-100 object-contain"
+            className="max-h-[420px] w-full rounded-lg bg-gray-100 object-contain"
           />
         </div>
       )}
@@ -48,9 +49,9 @@ export function PostCard({ post, showRestore = false }: PostCardProps) {
           {post.images.map((img) => (
             <img
               key={img.public_id}
-              src={img.secure_url}
+              src={withCloudinaryLimit(img.secure_url, 600)}
               alt=""
-              className="h-32 w-full rounded-lg bg-gray-100 object-contain"
+              className="h-48 w-full rounded-lg bg-gray-100 object-cover"
             />
           ))}
         </div>
