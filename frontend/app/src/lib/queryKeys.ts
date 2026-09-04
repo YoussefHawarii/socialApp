@@ -7,6 +7,8 @@ export const queryKeys = {
   },
   comments: (postId: string) => ['comments', postId] as const,
   chat: (friendId: string) => ['chat', friendId] as const,
+  friendRequests: ['user', 'friend-requests'] as const,
+  userSearch: (userName: string, page: number) => ['user', 'search', userName, page] as const,
   admin: {
     overview: ['admin', 'overview'] as const,
   },

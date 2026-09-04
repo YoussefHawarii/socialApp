@@ -2,7 +2,9 @@ import { httpClient } from './httpClient';
 import type { ApiSuccessResponse } from '@/types/api';
 import type {
   ChangePasswordRequest,
+  FriendRequestsResponse,
   ProfileResponse,
+  SearchUsersResponse,
   UpdateEmailRequest,
   UpdateProfileRequest,
   UpdateProfileResponse,
@@ -37,11 +39,34 @@ export const userApi = {
   deleteProfilePicture: () =>
     httpClient.delete<ApiSuccessResponse>('/user/profilePicture').then((r) => r.data),
 
-  deactivateAccount: () => httpClient.delete<ApiSuccessResponse>('/user/deactivate').then((r) => r.data),
+  deactivateAccount: () =>
+    httpClient.delete<ApiSuccessResponse>('/user/deactivate').then((r) => r.data),
 
   sendFriendRequest: (friendId: string) =>
-    httpClient.post<ApiSuccessResponse>(`/user/send-friend-request/${friendId}`).then((r) => r.data),
+    httpClient
+      .post<ApiSuccessResponse>(`/user/send-friend-request/${friendId}`)
+      .then((r) => r.data),
 
   acceptFriendRequest: (friendId: string) =>
-    httpClient.post<ApiSuccessResponse>(`/user/friend-request/${friendId}/accept`).then((r) => r.data),
+    httpClient
+      .post<ApiSuccessResponse>(`/user/friend-request/${friendId}/accept`)
+      .then((r) => r.data),
+
+  cancelFriendRequest: (friendId: string) =>
+    httpClient
+      .post<ApiSuccessResponse>(`/user/friend-request/${friendId}/cancel`)
+      .then((r) => r.data),
+
+  declineFriendRequest: (friendId: string) =>
+    httpClient
+      .post<ApiSuccessResponse>(`/user/friend-request/${friendId}/decline`)
+      .then((r) => r.data),
+
+  getFriendRequests: () =>
+    httpClient.get<FriendRequestsResponse>('/user/friend-requests').then((r) => r.data),
+
+  searchUsers: (userName: string, page: number) =>
+    httpClient
+      .get<SearchUsersResponse>('/user/search', { params: { userName, page } })
+      .then((r) => r.data),
 };

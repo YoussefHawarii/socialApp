@@ -113,4 +113,32 @@ router.post(
   validation(userValidation.acceptfriendIdSchema),
   asyncHandler(userServices.acceptFriendRequest),
 );
+
+// cancel a friend request you sent
+router.post(
+  "/friend-request/:friendId/cancel",
+  isAuthenticate,
+  validation(userValidation.friendIdSchema),
+  asyncHandler(userServices.cancelFriendRequest),
+);
+
+// decline a friend request you received
+router.post(
+  "/friend-request/:friendId/decline",
+  isAuthenticate,
+  validation(userValidation.friendIdSchema),
+  asyncHandler(userServices.declineFriendRequest),
+);
+
+// list incoming + sent friend requests
+router.get("/friend-requests", isAuthenticate, asyncHandler(userServices.getFriendRequests));
+
+// search users by userName
+router.get(
+  "/search",
+  isAuthenticate,
+  validation(userValidation.searchUsersSchema),
+  asyncHandler(userServices.searchUsers),
+);
+
 export default router;

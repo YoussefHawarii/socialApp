@@ -9,7 +9,6 @@ import { ConnectionStatusBadge } from '@/features/chat/components/ConnectionStat
 import { PageSpinner } from '@/components/shared/PageSpinner';
 import { ApiErrorAlert } from '@/components/shared/ApiErrorAlert';
 import { EmptyState } from '@/components/shared/EmptyState';
-import type { User } from '@/types/user';
 
 function Conversation({ friendId, friendName }: { friendId: string; friendName: string }) {
   const { data: me } = useCurrentUser();
@@ -48,21 +47,28 @@ export function ChatPage() {
   if (error) return <ApiErrorAlert error={error} />;
   if (!user) return null;
 
-  const friends = user.friends as User[];
+  const friends = user.friends;
   const selectedFriend = friends.find((f) => f._id === selectedFriendId);
 
   return (
     <div className="flex h-[32rem] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white sm:flex-row">
       <aside className="w-full shrink-0 overflow-y-auto border-b border-gray-200 p-3 sm:w-56 sm:border-r sm:border-b-0">
         <h2 className="mb-2 text-sm font-semibold text-gray-900">Friends</h2>
-        <FriendSelector friends={friends} selectedFriendId={selectedFriendId} onSelect={setSelectedFriendId} />
+        <FriendSelector
+          friends={friends}
+          selectedFriendId={selectedFriendId}
+          onSelect={setSelectedFriendId}
+        />
       </aside>
 
       {selectedFriend ? (
         <Conversation friendId={selectedFriend._id} friendName={selectedFriend.userName} />
       ) : (
         <div className="flex flex-1 items-center justify-center">
-          <EmptyState title="Select a friend" description="Choose a conversation to start chatting." />
+          <EmptyState
+            title="Select a friend"
+            description="Choose a conversation to start chatting."
+          />
         </div>
       )}
     </div>
