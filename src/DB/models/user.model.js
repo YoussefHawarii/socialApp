@@ -71,5 +71,22 @@ userSchema.pre("save", async function () {
   }
 });
 
+//pagination query
+userSchema.query.paginate = async function (page) {
+  //pagination logic
+  page = page ? page : 1;
+  const limit = 10;
+  const skip = limit * (page - 1);
+
+  const filter = this.getFilter();
+  const data = await this.skip(skip).limit(limit);
+  const total = await this.model.countDocuments(filter);
+  return {
+    data,
+    currentPage: Number(page),
+    totalPages: Math.ceil(total / limit),
+  };
+};
+
 //model
 export default model("User", userSchema);

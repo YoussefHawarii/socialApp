@@ -3,17 +3,23 @@ import { EmptyState } from '@/components/shared/EmptyState';
 
 /** Read-only friends summary for the profile page. Send/accept actions ship in Phase 7. */
 export function FriendsSummary({ user }: { user: User }) {
-  const friends = user.friends as User[];
+  const friends = user.friends;
 
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-sm font-semibold text-gray-900">Friends ({friends.length})</h3>
       {friends.length === 0 ? (
-        <EmptyState title="No friends yet" description="Friend requests will appear here once accepted." />
+        <EmptyState
+          title="No friends yet"
+          description="Friend requests will appear here once accepted."
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {friends.map((friend) => (
-            <li key={friend._id} className="flex items-center gap-2 rounded-lg border border-gray-200 p-2">
+            <li
+              key={friend._id}
+              className="flex items-center gap-2 rounded-lg border border-gray-200 p-2"
+            >
               <img
                 src={friend.profilePicture?.secure_url}
                 alt=""

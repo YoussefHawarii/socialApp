@@ -23,3 +23,8 @@ export const friendIdSchema = Joi.object({
 export const acceptfriendIdSchema = Joi.object({
   friendId: Joi.custom(isValidObjectId).required(),
 }).required();
+
+export const searchUsersSchema = Joi.object({
+  userName: Joi.string().min(2).max(25).required(),
+  page: Joi.number().integer().min(1),
+}).required();

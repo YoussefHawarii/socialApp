@@ -6,12 +6,15 @@ import { verifyNewEmail } from "../../utils/emails/generateHTML.js";
 import fs from "fs";
 import path from "path";
 import cloudinary from "../../utils/fileUploading/cloudinary.config.js";
-import { areFriends, requestExists } from "./helpers/checkFriends.js";
+import { areFriends, requestExists, getRelationshipStatus } from "./helpers/checkFriends.js";
+
+// escape regex metacharacters in user input before building a RegExp from it
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const profile = async (req, res, next) => {
   //req.user = {email,username,phoneNumber,gender,role}
   // const { user } = req;
-  const user = await User.findById(req.user._id).populate("friends");
+  const user = await User.findById(req.user._id).select("-password").populate("friends", "userName profilePicture");
   return res.status(201).json({ success: true, results: user });
 };
 
@@ -177,4 +180,64 @@ export const acceptFriendRequest = async (req, res, next) => {
   await user.save();
   await friend.save();
   return res.status(201).json({ success: true, message: "friend request accepted successfully" });
+};
+
+export const cancelFriendRequest = async (req, res, next) => {
+  const { friendId } = req.params; // receiver id
+  const user = req.user; // sender
+
+  const friend = await User.findOne({ _id: friendId, freezed: false, isDeleted: false });
+  if (!friend) return next(new Error("friend not found", { cause: 404 }));
+
+  if (getRelationshipStatus(user, friend) !== "pending_sent") return next(new Error("cannot cancel request", { cause: 400 }));
+
+  friend.friendRequests = friend.friendRequests.filter((id) => id.toString() !== user._id.toString());
+  await friend.save();
+  return res.status(200).json({ success: true, message: "friend request canceled successfully" });
+};
+
+export const declineFriendRequest = async (req, res, next) => {
+  const { friendId } = req.params; // sender id
+  const user = req.user; // receiver
+
+  const friend = await User.findOne({ _id: friendId, freezed: false, isDeleted: false });
+  if (!friend) return next(new Error("friend not found", { cause: 404 }));
+
+  if (getRelationshipStatus(user, friend) !== "pending_received") return next(new Error("cannot decline request", { cause: 400 }));
+
+  user.friendRequests = user.friendRequests.filter((id) => id.toString() !== friend._id.toString());
+  await user.save();
+  return res.status(200).json({ success: true, message: "friend request declined successfully" });
+};
+
+export const getFriendRequests = async (req, res, next) => {
+  const user = await User.findById(req.user._id).populate("friendRequests", "userName profilePicture");
+  const sent = await User.find({ friendRequests: req.user._id }, "userName profilePicture");
+
+  return res.status(200).json({
+    success: true,
+    results: { incoming: user.friendRequests, sent },
+  });
+};
+
+export const searchUsers = async (req, res, next) => {
+  const { userName, page } = req.query;
+
+  const query = User.find({
+    userName: new RegExp(escapeRegex(userName), "i"),
+    _id: { $ne: req.user._id },
+    freezed: false,
+    isDeleted: false,
+  }).select("userName profilePicture friends friendRequests");
+
+  const { data, currentPage, totalPages } = await query.paginate(page);
+
+  const results = data.map((candidate) => ({
+    _id: candidate._id,
+    userName: candidate.userName,
+    profilePicture: candidate.profilePicture,
+    status: getRelationshipStatus(req.user, candidate),
+  }));
+
+  return res.status(200).json({ success: true, results: { data: results, currentPage, totalPages } });
 };

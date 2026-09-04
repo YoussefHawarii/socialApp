@@ -1,8 +1,8 @@
-import type { User } from '@/types/user';
+import type { FriendSummary } from '@/types/user';
 import { EmptyState } from '@/components/shared/EmptyState';
 
 interface FriendSelectorProps {
-  friends: User[];
+  friends: FriendSummary[];
   selectedFriendId: string | null;
   onSelect: (friendId: string) => void;
 }
